@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  // Required for MongoDB/Mongoose on serverless
+  serverExternalPackages: ['mongoose', 'bcryptjs'],
+  // Disable static page generation for auth-dependent pages
+  experimental: {
+    serverActions: {},
+  },
 };
 
 export default nextConfig;

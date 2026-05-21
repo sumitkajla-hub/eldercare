@@ -61,7 +61,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Links */}
-          <div style={styles.desktopNav}>
+          <div style={styles.desktopNav} data-desktop-nav>
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -78,7 +78,7 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Auth */}
-          <div style={styles.desktopAuth}>
+          <div style={styles.desktopAuth} data-desktop-auth>
             {status === 'loading' ? (
               <div style={styles.authSkeleton} />
             ) : session ? (
@@ -133,6 +133,7 @@ export default function Navbar() {
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             style={styles.hamburger}
+            data-hamburger
             aria-label="Toggle menu"
           >
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -498,6 +499,7 @@ if (typeof document !== 'undefined') {
       @media (max-width: 768px) {
         nav [data-desktop-nav] { display: none !important; }
         nav [data-desktop-auth] { display: none !important; }
+        nav [data-hamburger] { display: block !important; }
       }
     `;
     document.head.appendChild(style);

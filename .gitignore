@@ -36,8 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local mongodb data
+/data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-.vercel

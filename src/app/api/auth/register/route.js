@@ -8,10 +8,18 @@ import Caregiver from '@/models/Caregiver';
 
 export async function POST(request) {
   try {
-    await connectDB();
+    // Parse request body first (doesn't need DB)
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, message: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
 
-    const body = await request.json();
-    const { name, email, password, phone, role, city, address, specialization } = body;
+    const { name, email, password, phone, role, city, address, specialization, experience, hourlyRate, qualifications } = body;
 
     // Validate required fields
     if (!name || !email || !password) {
@@ -26,6 +34,20 @@ export async function POST(request) {
       return NextResponse.json(
         { success: false, message: 'Password must be at least 6 characters' },
         { status: 400 }
+      );
+    }
+
+    // Connect to database
+    try {
+      await connectDB();
+    } catch (dbError) {
+      console.error('Database connection error during registration:', dbError);
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Unable to connect to the database. Please try again later or contact support.',
+        },
+        { status: 503 }
       );
     }
 
@@ -51,10 +73,19 @@ export async function POST(request) {
 
     // If registering as a caregiver, create the linked Caregiver document
     if (role === 'caregiver') {
-      await Caregiver.create({
-        userId: user._id,
-        specialization: specialization || 'nursing',
-      });
+      try {
+        await Caregiver.create({
+          userId: user._id,
+          specialization: specialization || 'nursing',
+          experience: experience ? Number(experience) : 0,
+          hourlyRate: hourlyRate ? Number(hourlyRate) : 0,
+          qualifications: Array.isArray(qualifications) ? qualifications : [],
+        });
+      } catch (caregiverError) {
+        console.error('Error creating caregiver profile:', caregiverError);
+        // User was created but caregiver profile failed - still return success
+        // The user can update their caregiver profile later
+      }
     }
 
     // Return user data without password
@@ -83,8 +114,24 @@ export async function POST(request) {
       );
     }
 
+    // Handle duplicate key error (race condition)
+    if (error.code === 11000) {
+      return NextResponse.json(
+        { success: false, message: 'An account with this email already exists' },
+        { status: 409 }
+      );
+    }
+
+    // Handle connection errors that may occur during operations
+    if (error.message && (error.message.includes('ECONNREFUSED') || error.message.includes('buffering timed out'))) {
+      return NextResponse.json(
+        { success: false, message: 'Unable to connect to the database. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: 'Registration failed. Please try again.' },
       { status: 500 }
     );
   }
